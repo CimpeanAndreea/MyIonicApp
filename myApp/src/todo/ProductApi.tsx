@@ -1,58 +1,36 @@
-import {getLogger} from "../core";
+import {authConfig, config, getLogger, withLogs} from "../core";
 import {ProductProps} from "./ProductProps";
 import axios from "axios";
 
 const log = getLogger('productApi');
 
 const baseUrl = 'localhost:3000';
-const productUrl = `http://${baseUrl}/product`;
+const productUrl = `http://${baseUrl}/api/product`;
 
-interface ResponseProps<T> {
-    data: T;
+export const getProducts: (token: string) => Promise<ProductProps[]> = token => {
+    return withLogs(axios.get(productUrl, authConfig(token)), 'getProducts');
 }
 
-function withLogs<T>(promise: Promise<ResponseProps<T>>, functionName: string): Promise<T> {
-    log(`${functionName} - started`);
-    return promise
-        .then(res => {
-            log(`${functionName} - succeeded`);
-            return Promise.resolve(res.data);
-        })
-        .catch(err => {
-            log(`${functionName} - failed`);
-            return Promise.reject(err);
-        });
+export const createProduct: (token: string, product: ProductProps) => Promise<ProductProps[]> = (token, product) => {
+    return withLogs(axios.post(productUrl, product, authConfig(token)), 'createProduct');
 }
 
-const config = {
-    headers: {
-        'Content-Type' : 'application/json'
-    }
-}
-
-export const getProducts: () => Promise<ProductProps[]> = () => {
-    return withLogs(axios.get(productUrl, config), 'getProducts');
-}
-
-export const createProduct: (product: ProductProps) => Promise<ProductProps[]> = product => {
-    return withLogs(axios.post(productUrl, product, config), 'createProduct');
-}
-
-export const updateProduct: (product: ProductProps) => Promise<ProductProps[]> = product => {
-    return withLogs(axios.put(`${productUrl}/${product.id}`, product, config), 'updateProduct');
+export const updateProduct: (token: string, product: ProductProps) => Promise<ProductProps[]> = (token, product) => {
+    return withLogs(axios.put(`${productUrl}/${product.id}`, product, authConfig(token)), 'updateProduct');
 }
 
 interface MessageData {
-    event: string;
+    type: string;
     payload: {
         product: ProductProps;
     };
 }
 
-export const newWebSocket = (onMessage: (data: MessageData) => void) => { // onMessage -> callback defined by the provider
+export const newWebSocket = (token: string, onMessage: (data: MessageData) => void) => { // onMessage -> callback defined by the provider
     const ws = new WebSocket(`ws://${baseUrl}`);
     ws.onopen = () => {
         log('web socket onopen');
+        ws.send(JSON.stringify({ type: 'authorization', payload: { token } }));
     }
     ws.onclose = () => {
         log('web socket onclose');

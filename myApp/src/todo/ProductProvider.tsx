@@ -1,13 +1,11 @@
-
-
-
 // provides data for other children components, does not have an ui representation
 
-import React, {useCallback, useEffect, useReducer} from "react";
+import React, {useCallback, useContext, useEffect, useReducer} from "react";
 import {getLogger} from "../core";
 import {ProductProps} from "./ProductProps";
 import PropTypes from 'prop-types';
 import {createProduct, getProducts, newWebSocket, updateProduct} from "./ProductApi";
+import { AuthContext } from "../auth";
 
 const log = getLogger('ProductProvider');
 
@@ -76,13 +74,14 @@ interface ProductProviderProps {
 
 // children -> children components
 export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) => {
+    const { token } = useContext(AuthContext); 
     const [state, dispatch] = useReducer(reducer, initialState);
     const { products, fetching, fetchingError, saving, savingError } = state;
 
-    useEffect(getProductsEffect, []);
-    useEffect(wsEffect, []); // side effect, executed once the component is rendered
+    useEffect(getProductsEffect, [token]);
+    useEffect(wsEffect, [token]); // side effect, executed once the component is rendered
 
-    const saveProduct = useCallback<SaveProductFn>(saveProductCallback, []);
+    const saveProduct = useCallback<SaveProductFn>(saveProductCallback, [token]);
 
     const value = { products, fetching, fetchingError, saving, savingError, saveProduct };
 
@@ -102,10 +101,13 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
         }
 
         async function fetchItems() {
+            if (!token?.trim()) {
+                return;
+            }
             try {
                 log('fetchingProducts started');
                 dispatch({type: FETCH_PRODUCTS_STARTED});
-                const products = await getProducts();
+                const products = await getProducts(token);
                 log('fetchProducts succeeded');
                 if(!canceled) {
                     dispatch({type: FETCH_PRODUCTS_SUCCEEDED, payload: { products }});
@@ -124,7 +126,7 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
         try {
             log('saveProduct started');
             dispatch({ type : SAVE_PRODUCT_STARTED });
-            const savedProduct = await (product.id ? updateProduct(product) : createProduct(product));
+            const savedProduct = await (product.id ? updateProduct(token, product) : createProduct(token, product));
             log('saveProduct succeeded');
             dispatch({ type: SAVE_PRODUCT_SUCCEEDED, payload: { product: savedProduct } });
         } catch (error) {
@@ -136,21 +138,23 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     function wsEffect() {
         let canceled = false;
         log('wsEffect - connecting');
-        const closeWebSocket = newWebSocket(message => { // callback
-           if (canceled) {
-              return;
-           }
-           const { event, payload: { product }} = message;
-           log(`ws message, item ${event}`);
-           if(event === 'created' || event === 'updated') {
-               dispatch( { type: SAVE_PRODUCT_SUCCEEDED, payload: { product } });
-           }
-        });
+        let closeWebSocket: () => void;
+        if(token?.trim()) {
+            closeWebSocket = newWebSocket(token, message => { // callback
+                if (canceled) {
+                    return;
+                }
+                const { type, payload: { product }} = message;
+                log(`ws message, item ${type}`);
+                if(type === 'created' || type === 'updated') {
+                    dispatch( { type: SAVE_PRODUCT_SUCCEEDED, payload: { product } });
+                }
+            });
+        }
         return () => { // in case component was unmounted
             log('wsEffect - disconnecting');
             canceled = true;
-            closeWebSocket();
+            closeWebSocket?.();
         }
     }
-
 };

@@ -23,19 +23,21 @@ import './theme/variables.css';
 import React from "react";
 import {ProductEdit, ProductList} from "./todo";
 import {ProductProvider} from "./todo/ProductProvider";
+import { AuthProvider, Login, PrivateRoute } from './auth';
 
 const App: React.FC = () => (
   <IonApp>
-      <ProductProvider>
-        <IonReactRouter>
-          <IonRouterOutlet>
-              <Route path="/products" component={ProductList} exact={true} />
-              <Route path="/product" component={ProductEdit} exact={true} />
-              <Route path="/product/:id" component={ProductEdit} exact={true} />
-              <Route exact path="/" render={() => <Redirect to="/products" />} />
-          </IonRouterOutlet>
-        </IonReactRouter>
-      </ProductProvider>
+    <IonReactRouter>
+      <AuthProvider>
+        <Route path="/login" component={Login} exact={true}/>
+        <ProductProvider>
+          <PrivateRoute path="/products" component={ProductList} exact={true} />
+          <PrivateRoute path="/product" component={ProductEdit} exact={true} />
+          <PrivateRoute path="/product/:id" component={ProductEdit} exact={true} />
+        </ProductProvider>
+        <Route exact path="/" render={() => <Redirect to="/products" />} />
+      </AuthProvider>
+    </IonReactRouter>
   </IonApp>
 );
 
