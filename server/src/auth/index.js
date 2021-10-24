@@ -1,0 +1,1 @@
+export * from './router'; //export the router(public interface)
