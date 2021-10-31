@@ -6,7 +6,7 @@ export class ProductStore {
     }
 
     async find(props) {
-        return this.store.find(props);
+        return this.store.find(props); // find all
     }
 
     async findOne(props) {
@@ -30,4 +30,5 @@ export class ProductStore {
     }
 }
 
+//load products
 export default new ProductStore({ filename: './db/products.json', autoload: true });

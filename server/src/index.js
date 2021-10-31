@@ -31,7 +31,7 @@ app
 
 //jwt -> json web token
 //get the authorization header for each request
-//if nor a valid token throws an exception
+//if not a valid token throws an exception
 //acts like a guard for the protected part
 app.use(jwt(jwtConfig));
 

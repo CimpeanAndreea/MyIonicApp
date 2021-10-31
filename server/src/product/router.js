@@ -1,9 +1,15 @@
+//  structure:
+//      -> store - db part
+//      -> router - define endpoints
+//      -> index - export router
+
 import Router from 'koa-router';
 import productStore from './store';
 import { broadcast } from "../utils";
 
 export const router = new Router();
 
+// get products of logged user
 router.get('/', async (ctx) => { //ctx = { request, response, state }
     const response = ctx.response;
     const userId = ctx.state.user._id; //logged in user

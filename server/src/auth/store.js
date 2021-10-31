@@ -6,7 +6,7 @@ export class UserStore {
   }
   
   async findOne(props) {
-    return this.store.findOne(props);
+    return this.store.findOne(props); //find one with certain properties
   }
   
   async insert(user) {
