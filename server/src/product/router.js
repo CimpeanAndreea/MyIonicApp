@@ -14,7 +14,6 @@ router.get('/', async (ctx) => { //ctx = { request, response, state }
     const response = ctx.response;
     const userId = ctx.state.user._id; //logged in user
     response.body = await productStore.find({ userId });
-    console.log(response.body);
     response.status = 200; //ok
 });
 
@@ -41,6 +40,7 @@ const createProduct = async (ctx, product, response) => {
         product.userId = userId;
         response.body = await productStore.insert(product);
         response.status = 201; //cerated
+        product._id = response.body._id;
         broadcast(userId, { type: 'created', payload: product });
     } catch (err) {
         response.body = { message: err.message };

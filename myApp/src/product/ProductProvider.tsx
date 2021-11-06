@@ -57,7 +57,6 @@ const reducer: (sate: ProductsState, action: ActionProps) => ProductsState =
                 const index = products.findIndex(prod => prod._id === product._id);
                 if(index === -1) {
                     products.splice(0, 0, product);
-                    console.log("HEREPP" + products[0]._id)
                 } else {
                     products[index] = product;
                 }
@@ -130,7 +129,6 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
             log('saveProduct started');
             dispatch({ type : SAVE_PRODUCT_STARTED });
             const savedProduct = await (product._id ? updateProduct(token, product) : createProduct(token, product));
-            console.log("HERE SAVED:" + savedProduct._id);
             log('saveProduct succeeded');
             dispatch({ type: SAVE_PRODUCT_SUCCEEDED, payload: { product: savedProduct } });
         } catch (error) {
@@ -151,7 +149,6 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
                 const { type, payload: product } = message;
                 log(`ws message, item ${type}`);
                 if(type === 'created' || type === 'updated') {
-                    console.log("HERE ws" + product.productName);
                     dispatch( { type: SAVE_PRODUCT_SUCCEEDED, payload: { product } });
                 }
             });
