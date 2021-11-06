@@ -7,6 +7,7 @@ const log = getLogger('AuthProvider');
 
 type LoginFn = (username?: string, password?: string) => void;
 
+// Authorization state
 export interface AuthState {
     authenticationError: Error | null;
     isAuthenticated: boolean;
@@ -26,17 +27,20 @@ const initialState: AuthState = {
     token: '',
 };
 
+// create a context with the initial state
 export const AuthContext = React.createContext<AuthState>(initialState);
 
+// children of <AuthProvider>
 interface AuthProviderProps {
     children: PropTypes.ReactNodeLike,
 }
 
+// <AuthProvider>
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const [state, setState] = useState<AuthState>(initialState);
+    const [state, setState] = useState<AuthState>(initialState); // return a state(with initial) with a function to update it
     const { isAuthenticated, isAuthenticating, authenticationError, pendingAuthentication, token } = state;
-    const login = useCallback<LoginFn>(loginCallback, []);
-    useEffect(authenticationEffect, [pendingAuthentication]);
+    const login = useCallback<LoginFn>(loginCallback, []); //call login 
+    useEffect(authenticationEffect, [pendingAuthentication]); // apply authenticationEffect only if pendingAuthentication changes
     const value = { isAuthenticated, login, isAuthenticating, authenticationError, token };
     
     log('render');
@@ -46,6 +50,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         </AuthContext.Provider>
     )
 
+    //call login -> pending = true, give username, password
     function loginCallback(username?: string, password?: string): void {
         log('login');
         setState({
@@ -72,15 +77,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 log('authenticate...');
                 setState({
                     ...state,
-                    isAuthenticating: true,
+                    isAuthenticating: true, //in authentication process
                 });
                 const { username, password } = state;
-                const { token } = await loginApi(username, password);
+                const { token } = await loginApi(username, password); // get token based on credentials
                 if(canceled) {
                     return;
                 }
                 log('authentication succeeded');
-                setState({
+                setState({  // if everything ok -> authenticated state
                     ...state,
                     token,
                     pendingAuthentication: false,
@@ -92,7 +97,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     return;
                 }
                 log('authenctication failed');
-                setState({
+                setState({ // error else
                     ...state,
                     //@ts-ignore
                     authenticationError: error,

@@ -4,13 +4,14 @@ import React, {useCallback, useContext, useEffect, useReducer} from "react";
 import {getLogger} from "../core";
 import {ProductProps} from "./ProductProps";
 import PropTypes from 'prop-types';
-import {createProduct, getProducts, newWebSocket, updateProduct} from "./ProductApi";
 import { AuthContext } from "../auth";
+import { createProduct, getProducts, newWebSocket, updateProduct } from "./productApi";
 
 const log = getLogger('ProductProvider');
 
-type SaveProductFn = (product: ProductProps) => Promise<any>;
+type SaveProductFn = (product: ProductProps) => Promise<any>; // function to save product
 
+// products state
 export interface ProductsState {
     products?: ProductProps[],
     fetching: boolean,
@@ -20,6 +21,7 @@ export interface ProductsState {
     saveProduct?: SaveProductFn,
 }
 
+// type of an action -> save product succeeded/... and some return data
 interface ActionProps {
     type: string,
     payload?: any,
@@ -37,25 +39,26 @@ const SAVE_PRODUCT_STARTED = 'SAVE_PRODUCT_STARTED';
 const SAVE_PRODUCT_SUCCEEDED = 'SAVE_PRODUCT_SUCCEEDED';
 const SAVE_PRODUCT_FAILED = 'SAVE_PRODUCT_FAILED';
 
+// return a state depending on the action type
 const reducer: (sate: ProductsState, action: ActionProps) => ProductsState =
-    (state, {type, payload}) => {
+    (state, { type, payload }) => {
         switch(type) {
             case FETCH_PRODUCTS_STARTED:
                 return { ...state, fetching: true, fetchingError: null };
             case FETCH_PRODUCTS_SUCCEEDED:
-                return { ...state, fetching: false, products: payload.products };
+                return { ...state, products: payload.products, fetching: false };
             case FETCH_PRODUCTS_FAILED:
-                return { ...state, fetchingError: payload.error, fetching: false};
+                return { ...state, fetchingError: payload.error, fetching: false };
             case SAVE_PRODUCT_STARTED:
                 return { ...state, savingError: null, saving: true };
             case SAVE_PRODUCT_SUCCEEDED:
                 const products = [...(state.products || [])];
                 const product = payload.product;
-                const index = products.findIndex((prod => prod.id === product.id));
+                const index = products.findIndex(prod => prod._id === product._id);
                 if(index === -1) {
                     products.splice(0, 0, product);
-                }
-                else {
+                    console.log("HEREPP" + products[0]._id)
+                } else {
                     products[index] = product;
                 }
                 return { ...state, products, saving: false };
@@ -78,10 +81,10 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     const [state, dispatch] = useReducer(reducer, initialState);
     const { products, fetching, fetchingError, saving, savingError } = state;
 
-    useEffect(getProductsEffect, [token]);
-    useEffect(wsEffect, [token]); // side effect, executed once the component is rendered
-
     const saveProduct = useCallback<SaveProductFn>(saveProductCallback, [token]);
+
+    useEffect(getProductsEffect, [token]);
+    useEffect(wsEffect, [token]); // side effect, (executed once the component is rendered) executed once the token changes
 
     const value = { products, fetching, fetchingError, saving, savingError, saveProduct };
 
@@ -106,11 +109,11 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
             }
             try {
                 log('fetchingProducts started');
-                dispatch({type: FETCH_PRODUCTS_STARTED});
+                dispatch({ type: FETCH_PRODUCTS_STARTED });
                 const products = await getProducts(token);
                 log('fetchProducts succeeded');
                 if(!canceled) {
-                    dispatch({type: FETCH_PRODUCTS_SUCCEEDED, payload: { products }});
+                    dispatch({ type: FETCH_PRODUCTS_SUCCEEDED, payload: { products } });
                 }
             } catch (error) {
                 log('fetchProducts failed');
@@ -126,7 +129,8 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
         try {
             log('saveProduct started');
             dispatch({ type : SAVE_PRODUCT_STARTED });
-            const savedProduct = await (product.id ? updateProduct(token, product) : createProduct(token, product));
+            const savedProduct = await (product._id ? updateProduct(token, product) : createProduct(token, product));
+            console.log("HERE SAVED:" + savedProduct._id);
             log('saveProduct succeeded');
             dispatch({ type: SAVE_PRODUCT_SUCCEEDED, payload: { product: savedProduct } });
         } catch (error) {
@@ -144,9 +148,10 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
                 if (canceled) {
                     return;
                 }
-                const { type, payload: { product }} = message;
+                const { type, payload: product } = message;
                 log(`ws message, item ${type}`);
                 if(type === 'created' || type === 'updated') {
+                    console.log("HERE ws" + product.productName);
                     dispatch( { type: SAVE_PRODUCT_SUCCEEDED, payload: { product } });
                 }
             });

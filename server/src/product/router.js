@@ -14,6 +14,7 @@ router.get('/', async (ctx) => { //ctx = { request, response, state }
     const response = ctx.response;
     const userId = ctx.state.user._id; //logged in user
     response.body = await productStore.find({ userId });
+    console.log(response.body);
     response.status = 200; //ok
 });
 
@@ -40,7 +41,7 @@ const createProduct = async (ctx, product, response) => {
         product.userId = userId;
         response.body = await productStore.insert(product);
         response.status = 201; //cerated
-        broadcast(userId, { type: 'created', payload: note });
+        broadcast(userId, { type: 'created', payload: product });
     } catch (err) {
         response.body = { message: err.message };
         response.status = 400; //bad request
@@ -54,6 +55,7 @@ router.put('/:id', async (ctx) => {
     const id = ctx.params.id;
     const productId = product._id;
     const response = ctx.response;
+
     if(productId && productId !== id) {
         response.body = { message: 'Param id and body _id shoul be the same' };
         response.status = 400; //bad request

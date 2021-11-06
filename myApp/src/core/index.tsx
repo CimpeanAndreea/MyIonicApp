@@ -14,7 +14,7 @@ export function withLogs<T>(promise: Promise<ResponseProps<T>>, functionName: st
     return promise
         .then(res => {
             log(`${functionName} - succeeded`);
-            return Promise.resolve(res.data);
+            return Promise.resolve(res.data); // return a resolved promise with the state specified
         })
         .catch(err => {
             log(`${functionName} - failed`);
@@ -28,6 +28,7 @@ export const config = {
     }
 };
 
+//add in header the auth token
 export const authConfig = (token?: string) => ({
     headers: {
         'Content-Type': 'application/json',

@@ -14,7 +14,7 @@ export class ProductStore {
     }
 
     async insert(product) {
-        let productName = product.name;
+        let productName = product.productName;
         if(!productName) { //validation
             throw new Error('Missing name property');
         }

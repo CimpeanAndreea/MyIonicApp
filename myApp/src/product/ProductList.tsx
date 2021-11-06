@@ -1,4 +1,4 @@
-import React, {useContext, useState} from "react";
+import React, { useContext } from "react";
 import {
     IonContent,
     IonFab,
@@ -11,10 +11,10 @@ import {
     IonToolbar
 } from "@ionic/react";
 import Product from "./Product";
-import {getLogger} from "../core";
-import {add} from "ionicons/icons";
-import {ProductContext} from "./ProductProvider";
-import {RouteComponentProps} from "react-router";
+import { getLogger } from "../core";
+import { add } from "ionicons/icons";
+import { ProductContext } from "./ProductProvider";
+import { RouteComponentProps } from "react-router";
 
 const log = getLogger('ProductList');
 
@@ -26,15 +26,15 @@ const ProductList: React.FC<RouteComponentProps> = ({ history }) => {
         <IonPage>
             <IonHeader>
                 <IonToolbar>
-                    <IonTitle>My App</IonTitle>
+                    <IonTitle>Products App</IonTitle>
                 </IonToolbar>
             </IonHeader>
             <IonContent>
                 <IonLoading isOpen={fetching} message="Fetching products" />
                 {products && (
                     <IonList>
-                        {products.map(({id, name, price, quantity}) =>
-                            <Product key={id} id={id} name={name} price={price} quantity={quantity} onEdit={id => history.push(`/product/${id}`)} />)}
+                        {products.map(({ _id, productName, price, quantity}) =>
+                            <Product key={_id} _id={_id} productName={productName} price={price} quantity={quantity} onEdit={_id => history.push(`/product/${_id}`)} />)}
                     </IonList>
                 )}
                 {fetchingError && (
@@ -48,17 +48,6 @@ const ProductList: React.FC<RouteComponentProps> = ({ history }) => {
             </IonContent>
         </IonPage>
     );
-
-
-
-
-
-
-
-
-
-
-
 };
 
 export default ProductList;

@@ -6,15 +6,16 @@ import {IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel}
 const log = getLogger('Product');
 
 interface ProductPropsExt extends ProductProps {
-    onEdit: (id?: string) => void;
+    onEdit: (_id?: string) => void;
 }
 
-const Product: React.FC<ProductPropsExt> = ({id, name, price, quantity, onEdit}) => {
+// card of a product
+const Product: React.FC<ProductPropsExt> = ({ _id, productName, price, quantity, onEdit}) => {
     //log(`render ${name}`);
     return(
-        <IonCard onClick={() => onEdit(id)}>
+        <IonCard onClick={() => onEdit(_id)}>
             <IonCardHeader>
-                <IonCardTitle>{name}</IonCardTitle>
+                <IonCardTitle>{productName}</IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
                 <IonItem>Price: {price}</IonItem>
@@ -22,7 +23,7 @@ const Product: React.FC<ProductPropsExt> = ({id, name, price, quantity, onEdit})
             </IonCardContent>
 
         </IonCard>
-  )
+  );
 };
 
 export default Product;

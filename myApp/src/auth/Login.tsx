@@ -11,20 +11,21 @@ interface LoginState {
     password?: string;
 }
 
+// Login component
 export const Login: React.FC<RouteComponentProps> = ({ history }) => {
     const { isAuthenticated, isAuthenticating, login, authenticationError } = useContext(AuthContext);
     const [state, setState] = useState<LoginState>({});
     const { username, password } = state;
     
-    const handleLogin = () => {
+    const handleLogin = () => { // handle Login button press -> call login
         log('handleLogin...');
-        login?.(username, password);
+        login?.(username, password); // call login
     };
     log('render');
     if(isAuthenticated) {
-        return <Redirect to={{ pathname: '/' }}/>
+        return <Redirect to={{ pathname: '/' }}/> // if authenticated redirect to page in app
     }
-    return (
+    return ( // else return login form
         <IonPage>
             <IonHeader>
                 <IonToolbar>

@@ -1,8 +1,8 @@
-import {getLogger} from "../core";
-import {RouteComponentProps} from "react-router";
-import React, {useContext, useEffect, useState} from "react";
-import {ProductContext} from "./ProductProvider";
-import {ProductProps} from "./ProductProps";
+import { getLogger } from "../core";
+import { RouteComponentProps } from "react-router";
+import React, { useContext, useEffect, useState } from "react";
+import { ProductContext } from "./ProductProvider";
+import { ProductProps } from "./ProductProps";
 import {
     IonButton,
     IonButtons,
@@ -23,7 +23,7 @@ interface ProductEditProps extends RouteComponentProps<{
 
 const ProductEdit: React.FC<ProductEditProps> = ({ history, match }) => {
     const { products, saving, savingError, saveProduct } = useContext(ProductContext);
-    const [name, setName] = useState<string>('');
+    const [productName, setProductName] = useState<string>('');
     const [price, setPrice] = useState<number>(0.1);
     const [quantity, setQuantity] = useState<number>(1);
 
@@ -32,10 +32,10 @@ const ProductEdit: React.FC<ProductEditProps> = ({ history, match }) => {
     useEffect(() => {
         log('useEffect');
         const routeId = match.params.id || '';
-        const product = products?.find(prod => prod.id === routeId);
+        const product = products?.find(prod => prod._id === routeId);
         setProduct(product);
         if (product) {
-            setName(product.name);
+            setProductName(product.productName);
             // @ts-ignore
             setPrice(product.price);
             // @ts-ignore
@@ -45,7 +45,7 @@ const ProductEdit: React.FC<ProductEditProps> = ({ history, match }) => {
 
     const handleSave = () => {
         const editedProduct = product ? {
-            ...product, name, price, quantity } : { name, price, quantity };
+            ...product, productName, price, quantity } : { productName, price, quantity };
         saveProduct && saveProduct(editedProduct).then(() => history.goBack());
     };
 
@@ -66,7 +66,7 @@ const ProductEdit: React.FC<ProductEditProps> = ({ history, match }) => {
             <IonContent>
                 <IonItem>
                     <IonLabel position="floating">Product Name</IonLabel>
-                    <IonInput value={name} onIonChange={e => setName(e.detail.value || '')}/>
+                    <IonInput value={productName} onIonChange={e => setProductName(e.detail.value || '')}/>
                 </IonItem>
 
                 <IonItem>

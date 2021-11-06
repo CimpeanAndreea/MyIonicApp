@@ -1,5 +1,4 @@
 import axios from "axios";
-import { AuthState } from ".";
 import { baseUrl, config, withLogs } from '../core';
 
 const authUrl = `http://${baseUrl}/api/auth/login`;
@@ -8,6 +7,7 @@ export interface AuthProps {
     token: string;
 }
 
+//get token
 export const login: (username?: string, password?: string) => Promise<AuthProps> = (username, password) => {
     return withLogs(axios.post(authUrl, {username, password}, config), 'login');
 }
