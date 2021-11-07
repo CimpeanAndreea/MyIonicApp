@@ -12,20 +12,29 @@ import {
 } from "@ionic/react";
 import Product from "./Product";
 import { getLogger } from "../core";
-import { add } from "ionicons/icons";
+import { add, wifi } from "ionicons/icons";
 import { ProductContext } from "./ProductProvider";
 import { RouteComponentProps } from "react-router";
+import { useNetwork } from "../network/useNetwork";
+import './Product.css';
 
 const log = getLogger('ProductList');
 
 const ProductList: React.FC<RouteComponentProps> = ({ history }) => {
     const { products, fetching, fetchingError } = useContext(ProductContext); // returns the value of the context(see the context as a service)
+    const { networkStatus } = useNetwork();
 
     log('render');
     return (
         <IonPage>
             <IonHeader>
-                <IonToolbar>
+                <IonToolbar className="toolbar">
+                    {networkStatus.connected && (
+                        <IonIcon icon={wifi} slot="start" style={{fontSize:26, color: 'green'}}></IonIcon>
+                    )}
+                    {!networkStatus.connected && (
+                        <IonIcon icon={wifi} slot="start" style={{fontSize:26, color: 'red'}}></IonIcon>
+                    )}
                     <IonTitle>Products App</IonTitle>
                 </IonToolbar>
             </IonHeader>
