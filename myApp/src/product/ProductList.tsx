@@ -1,5 +1,6 @@
 import React, { useContext } from "react";
 import {
+    IonButton,
     IonContent,
     IonFab,
     IonFabButton,
@@ -12,17 +13,25 @@ import {
 } from "@ionic/react";
 import Product from "./Product";
 import { getLogger } from "../core";
-import { add, wifi } from "ionicons/icons";
+import { add, wifi, logOut } from "ionicons/icons";
 import { ProductContext } from "./ProductProvider";
 import { RouteComponentProps } from "react-router";
 import { useNetwork } from "../network/useNetwork";
 import './Product.css';
+import { AuthContext, AuthState } from "../auth";
 
 const log = getLogger('ProductList');
 
 const ProductList: React.FC<RouteComponentProps> = ({ history }) => {
     const { products, fetching, fetchingError } = useContext(ProductContext); // returns the value of the context(see the context as a service)
     const { networkStatus } = useNetwork();
+    const { logout } = useContext<AuthState>(AuthContext);
+
+    const handleLogout = () => { 
+        log('handleLogout...');
+        logout?.();
+        history.push('/login');
+    };
 
     log('render');
     return (
@@ -36,6 +45,7 @@ const ProductList: React.FC<RouteComponentProps> = ({ history }) => {
                         <IonIcon icon={wifi} slot="start" style={{fontSize:26, color: 'red'}}></IonIcon>
                     )}
                     <IonTitle>Products App</IonTitle>
+                    <IonIcon slot="end" icon={logOut} onClick={handleLogout} style={{fontSize:26}}></IonIcon>
                 </IonToolbar>
             </IonHeader>
             <IonContent>
