@@ -37,9 +37,11 @@ router.get('/:id', async (ctx) => {
 const createProduct = async (ctx, product, response) => {
     try {
         const userId = ctx.state.user._id;
+
         product.userId = userId;
         response.body = await productStore.insert(product);
         response.status = 201; //cerated
+
         product._id = response.body._id;
         broadcast(userId, { type: 'created', payload: product });
     } catch (err) {

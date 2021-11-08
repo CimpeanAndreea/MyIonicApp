@@ -6,6 +6,8 @@ import {ProductProps} from "./ProductProps";
 import PropTypes from 'prop-types';
 import { AuthContext } from "../auth";
 import { createProduct, getProducts, newWebSocket, updateProduct } from "./productApi";
+import { useNetwork } from "../network/useNetwork";
+import { Storage } from '@capacitor/storage';
 
 const log = getLogger('ProductProvider');
 
@@ -79,11 +81,13 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     const { token } = useContext(AuthContext); 
     const [state, dispatch] = useReducer(reducer, initialState);
     const { products, fetching, fetchingError, saving, savingError } = state;
+    const { networkStatus } = useNetwork();
 
-    const saveProduct = useCallback<SaveProductFn>(saveProductCallback, [token]);
+    const saveProduct = useCallback<SaveProductFn>(saveProductCallback, [token, networkStatus]);
 
     useEffect(getProductsEffect, [token]);
-    useEffect(wsEffect, [token]); // side effect, (executed once the component is rendered) executed once the token changes
+    useEffect(wsEffect, [token, networkStatus]); // side effect, (executed once the component is rendered) executed once the token changes
+    useEffect(networkStatusChanged, [networkStatus]);
 
     const value = { products, fetching, fetchingError, saving, savingError, saveProduct };
 
@@ -94,6 +98,21 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
             {children}
         </ProductContext.Provider>
     );
+
+    function networkStatusChanged() {
+        (async () => {
+            if(networkStatus.connected) {
+                const res = await Storage.get({ key: 'unsavedProducts' });
+                if (res.value) {
+                    const unsavedProducts:ProductProps[] = JSON.parse(res.value);
+                    unsavedProducts.forEach(prod => {
+                        saveProduct(prod);
+                    });
+                }
+                await Storage.remove({ key: 'unsavedProducts' });
+            }
+        })();
+    }
 
     function getProductsEffect() {
         let canceled = false;
@@ -125,38 +144,60 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     }
 
     async function saveProductCallback(product: ProductProps) {
-        try {
-            log('saveProduct started');
-            dispatch({ type : SAVE_PRODUCT_STARTED });
-            const savedProduct = await (product._id ? updateProduct(token, product) : createProduct(token, product));
-            log('saveProduct succeeded');
-            dispatch({ type: SAVE_PRODUCT_SUCCEEDED, payload: { product: savedProduct } });
-        } catch (error) {
-            log('savedItem failed');
-            dispatch( { type: SAVE_PRODUCT_FAILED, payload: { error } });
+        if(!networkStatus.connected) {
+            const res = await Storage.get({ key: 'unsavedProducts' });
+            if (res.value) {
+                var unsavedProducts = JSON.parse(res.value);
+                unsavedProducts.push(product);
+                await Storage.set({
+                    key: 'unsavedProducts',
+                    value: JSON.stringify(unsavedProducts)
+                  });
+            } else {
+                const unsavedProducts: ProductProps[] = [];
+                unsavedProducts.push(product);
+                await Storage.set({
+                    key: 'unsavedProducts',
+                    value: JSON.stringify(unsavedProducts)
+                  });
+            }
+        }
+        else {
+            try {
+                log('saveProduct started');
+                dispatch({ type : SAVE_PRODUCT_STARTED });
+                const savedProduct = await (product._id ? updateProduct(token, product) : createProduct(token, product));
+                log('saveProduct succeeded');
+                dispatch({ type: SAVE_PRODUCT_SUCCEEDED, payload: { product: savedProduct } });
+            } catch (error) {
+                log('savedItem failed');
+                dispatch( { type: SAVE_PRODUCT_FAILED, payload: { error } });
+            }
         }
     }
 
     function wsEffect() {
-        let canceled = false;
-        log('wsEffect - connecting');
-        let closeWebSocket: () => void;
-        if(token?.trim()) {
-            closeWebSocket = newWebSocket(token, message => { // callback
-                if (canceled) {
-                    return;
-                }
-                const { type, payload: product } = message;
-                log(`ws message, item ${type}`);
-                if(type === 'created' || type === 'updated') {
-                    dispatch( { type: SAVE_PRODUCT_SUCCEEDED, payload: { product } });
-                }
-            });
-        }
-        return () => { // in case component was unmounted
-            log('wsEffect - disconnecting');
-            canceled = true;
-            closeWebSocket?.();
+        if(networkStatus.connected) {
+            let canceled = false;
+            log('wsEffect - connecting');
+            let closeWebSocket: () => void;
+            if(token?.trim()) {
+                closeWebSocket = newWebSocket(token, message => { // callback
+                    if (canceled) {
+                        return;
+                    }
+                    const { type, payload: product } = message;
+                    log(`ws message, item ${type}`);
+                    if(type === 'created' || type === 'updated') {
+                        dispatch( { type: SAVE_PRODUCT_SUCCEEDED, payload: { product } });
+                    }
+                });
+            }
+            return () => { // in case component was unmounted
+                log('wsEffect - disconnecting');
+                canceled = true;
+                closeWebSocket?.();
+            }
         }
     }
 };

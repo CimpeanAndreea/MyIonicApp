@@ -87,7 +87,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     function logoutCallback(): void {
         (async () => {
             log('logout');
-            await Storage.remove({ key: 'userToken' });
             setState({
                 ...state,
                 isAuthenticated: false,
@@ -96,6 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 pendingAuthentication: false,
                 token: '',
             });
+            await Storage.clear();
         })();
     }
 

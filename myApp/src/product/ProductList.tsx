@@ -1,11 +1,11 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
     IonButton,
     IonContent,
     IonFab,
     IonFabButton,
     IonHeader,
-    IonIcon, IonList,
+    IonIcon, IonItem, IonList,
     IonLoading,
     IonPage,
     IonTitle,
@@ -14,11 +14,11 @@ import {
 import Product from "./Product";
 import { getLogger } from "../core";
 import { add, wifi, logOut } from "ionicons/icons";
-import { ProductContext } from "./ProductProvider";
 import { RouteComponentProps } from "react-router";
 import { useNetwork } from "../network/useNetwork";
 import './Product.css';
 import { AuthContext, AuthState } from "../auth";
+import { ProductContext } from "./ProductProvider";
 
 const log = getLogger('ProductList');
 
