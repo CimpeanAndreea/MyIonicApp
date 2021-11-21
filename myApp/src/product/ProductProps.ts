@@ -3,4 +3,5 @@ export interface ProductProps {
     productName: string;
     price?: number;
     quantity?: number;
+    category: string;
 }

@@ -11,6 +11,8 @@ import {
     IonInput, IonItem, IonLabel,
     IonLoading,
     IonPage,
+    IonSelect,
+    IonSelectOption,
     IonTitle,
     IonToolbar
 } from "@ionic/react";
@@ -26,6 +28,7 @@ const ProductEdit: React.FC<ProductEditProps> = ({ history, match }) => {
     const [productName, setProductName] = useState<string>('');
     const [price, setPrice] = useState<number>(0.1);
     const [quantity, setQuantity] = useState<number>(1);
+    const [category, setCategory] = useState<string>('');
 
     const [product, setProduct] = useState<ProductProps>();
 
@@ -40,12 +43,14 @@ const ProductEdit: React.FC<ProductEditProps> = ({ history, match }) => {
             setPrice(product.price);
             // @ts-ignore
             setQuantity(product.quantity);
+            // @ts-ignore
+            setCategory(product.category);
         }
     },  [match.params.id, products]);
 
     const handleSave = () => {
         const editedProduct = product ? {
-            ...product, productName, price, quantity } : { productName, price, quantity };
+            ...product, productName, price, quantity } : { productName, price, quantity, category };
         saveProduct && saveProduct(editedProduct).then(() => history.goBack());
     };
 
@@ -77,6 +82,16 @@ const ProductEdit: React.FC<ProductEditProps> = ({ history, match }) => {
                 <IonItem>
                     <IonLabel position="floating">Quantity</IonLabel>
                     <IonInput type="number" value={quantity} onIonChange={e => setQuantity(e.detail.value ? +e.detail.value : 0)}/>
+                </IonItem>
+
+                <IonItem>
+                    <IonLabel>Category:  </IonLabel>
+                    <IonSelect value={category} onIonChange={e => setCategory(e.detail.value)}>
+                        <IonSelectOption value="Food">Food</IonSelectOption>
+                        <IonSelectOption value="Electronics">Electronics</IonSelectOption>
+                        <IonSelectOption value="Books">Books</IonSelectOption>
+                        <IonSelectOption value="Clothes">Clothes</IonSelectOption>
+                    </IonSelect>
                 </IonItem>
 
                 <IonLoading isOpen={saving}/>

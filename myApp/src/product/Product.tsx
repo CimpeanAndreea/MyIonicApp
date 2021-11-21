@@ -10,7 +10,7 @@ interface ProductPropsExt extends ProductProps {
 }
 
 // card of a product
-const Product: React.FC<ProductPropsExt> = ({ _id, productName, price, quantity, onEdit}) => {
+const Product: React.FC<ProductPropsExt> = ({ _id, productName, price, quantity, category, onEdit}) => {
     //log(`render ${name}`);
     return(
         <IonCard onClick={() => onEdit(_id)}>
@@ -20,6 +20,7 @@ const Product: React.FC<ProductPropsExt> = ({ _id, productName, price, quantity,
             <IonCardContent>
                 <IonItem>Price: {price}</IonItem>
                 <IonItem>Quantity: {quantity}</IonItem>
+                <IonItem>Category: {category}</IonItem>
             </IonCardContent>
 
         </IonCard>

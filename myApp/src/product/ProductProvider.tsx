@@ -83,9 +83,11 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     const { products, fetching, fetchingError, saving, savingError } = state;
     const { networkStatus } = useNetwork();
 
+    // useCallback = same function instance for same dependencies, accross renders
     const saveProduct = useCallback<SaveProductFn>(saveProductCallback, [token, networkStatus]);
 
     useEffect(getProductsEffect, [token]);
+    // useEffect -> executed when any of the dependencies changes
     useEffect(wsEffect, [token, networkStatus]); // side effect, (executed once the component is rendered) executed once the token changes
     useEffect(networkStatusChanged, [networkStatus]);
 
