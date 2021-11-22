@@ -40,7 +40,6 @@ const FETCH_PRODUCTS_FAILED = 'FETCH_PRODUCTS_FAILED';
 const SAVE_PRODUCT_STARTED = 'SAVE_PRODUCT_STARTED';
 const SAVE_PRODUCT_SUCCEEDED = 'SAVE_PRODUCT_SUCCEEDED';
 const SAVE_PRODUCT_FAILED = 'SAVE_PRODUCT_FAILED';
-const SAVE_PRODUCT_OFFLINE = 'SAVE_PRODUCT_OFFLINE';
 
 // return a state depending on the action type
 const reducer: (sate: ProductsState, action: ActionProps) => ProductsState =
@@ -83,8 +82,6 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     const [state, dispatch] = useReducer(reducer, initialState);
     const { products, fetching, fetchingError, saving, savingError } = state;
     const { networkStatus } = useNetwork();
-
-    const [savedOffline, setSavedOffline] = useState<boolean>(false);
 
     // useCallback = same function instance for same dependencies, accross renders
     const saveProduct = useCallback<SaveProductFn>(saveProductCallback, [token, networkStatus]);
@@ -147,18 +144,6 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
                 log('fetchProducts succeeded');
                 if(!canceled) {
                     dispatch({ type: FETCH_PRODUCTS_SUCCEEDED, payload: { products } });
-                    for (const prod of products) {
-                        await Storage.set({
-                            key: prod._id!,
-                            value: JSON.stringify({
-                                _id: prod._id,
-                                productName: prod.productName,
-                                price: prod.price,
-                                quantity: prod.quantity,
-                                category: prod.category
-                            })
-                        })
-                    }
                 }
             } catch (error) {
                 log('fetchProducts failed');
@@ -198,7 +183,6 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
                   });
             }
             dispatch({ type: SAVE_PRODUCT_SUCCEEDED, payload: { product: product } });
-            setSavedOffline(true);
         }
         else {
             try {
