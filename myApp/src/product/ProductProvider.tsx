@@ -1,6 +1,6 @@
 // provides data for other children components, does not have an ui representation
 
-import React, {useCallback, useContext, useEffect, useReducer} from "react";
+import React, {useCallback, useContext, useEffect, useReducer, useState} from "react";
 import {getLogger} from "../core";
 import {ProductProps} from "./ProductProps";
 import PropTypes from 'prop-types';
@@ -40,6 +40,7 @@ const FETCH_PRODUCTS_FAILED = 'FETCH_PRODUCTS_FAILED';
 const SAVE_PRODUCT_STARTED = 'SAVE_PRODUCT_STARTED';
 const SAVE_PRODUCT_SUCCEEDED = 'SAVE_PRODUCT_SUCCEEDED';
 const SAVE_PRODUCT_FAILED = 'SAVE_PRODUCT_FAILED';
+const SAVE_PRODUCT_OFFLINE = 'SAVE_PRODUCT_OFFLINE';
 
 // return a state depending on the action type
 const reducer: (sate: ProductsState, action: ActionProps) => ProductsState =
@@ -57,7 +58,7 @@ const reducer: (sate: ProductsState, action: ActionProps) => ProductsState =
                 const products = [...(state.products || [])];
                 const product = payload.product;
                 const index = products.findIndex(prod => prod._id === product._id);
-                if(index === -1) {
+                if(index === -1 || !product._id) {
                     products.splice(0, 0, product);
                 } else {
                     products[index] = product;
@@ -83,10 +84,12 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     const { products, fetching, fetchingError, saving, savingError } = state;
     const { networkStatus } = useNetwork();
 
+    const [savedOffline, setSavedOffline] = useState<boolean>(false);
+
     // useCallback = same function instance for same dependencies, accross renders
     const saveProduct = useCallback<SaveProductFn>(saveProductCallback, [token, networkStatus]);
 
-    useEffect(getProductsEffect, [token]);
+    useEffect(getProductsEffect, [token, networkStatus]);
     // useEffect -> executed when any of the dependencies changes
     useEffect(wsEffect, [token, networkStatus]); // side effect, (executed once the component is rendered) executed once the token changes
     useEffect(networkStatusChanged, [networkStatus]);
@@ -124,6 +127,16 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
         }
 
         async function fetchItems() {
+            if(!networkStatus.connected) {
+                const res = await Storage.get({ key: 'unsavedProducts' });
+                if (res.value) {
+                    const unsavedProducts:ProductProps[] = JSON.parse(res.value);
+                    unsavedProducts.forEach(prod => {
+                        products?.splice(0, 0, prod);
+                    });
+                    dispatch({type: FETCH_PRODUCTS_SUCCEEDED, payload: {products: products}});
+                }
+            } 
             if (!token?.trim()) {
                 return;
             }
@@ -134,9 +147,29 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
                 log('fetchProducts succeeded');
                 if(!canceled) {
                     dispatch({ type: FETCH_PRODUCTS_SUCCEEDED, payload: { products } });
+                    for (const prod of products) {
+                        await Storage.set({
+                            key: prod._id!,
+                            value: JSON.stringify({
+                                _id: prod._id,
+                                productName: prod.productName,
+                                price: prod.price,
+                                quantity: prod.quantity,
+                                category: prod.category
+                            })
+                        })
+                    }
                 }
             } catch (error) {
                 log('fetchProducts failed');
+                const res = await Storage.get({ key: 'unsavedProducts' });
+                if (res.value) {
+                    const unsavedProducts:ProductProps[] = JSON.parse(res.value);
+                    unsavedProducts.forEach(prod => {
+                        products?.splice(0, 0, prod);
+                    });
+                    dispatch({type: FETCH_PRODUCTS_SUCCEEDED, payload: {products: products}});
+                }
                 if(!canceled) {
                     // @ts-ignore
                     dispatch({type: FETCH_PRODUCTS_FAILED, payload: { error }});
@@ -147,6 +180,7 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
 
     async function saveProductCallback(product: ProductProps) {
         if(!networkStatus.connected) {
+            alert("Product saved offline");
             const res = await Storage.get({ key: 'unsavedProducts' });
             if (res.value) {
                 var unsavedProducts = JSON.parse(res.value);
@@ -163,6 +197,8 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
                     value: JSON.stringify(unsavedProducts)
                   });
             }
+            dispatch({ type: SAVE_PRODUCT_SUCCEEDED, payload: { product: product } });
+            setSavedOffline(true);
         }
         else {
             try {

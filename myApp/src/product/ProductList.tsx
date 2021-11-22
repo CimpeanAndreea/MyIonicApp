@@ -34,15 +34,18 @@ const ProductList: React.FC<RouteComponentProps> = ({ history }) => {
     const { networkStatus } = useNetwork();
     const { logout } = useContext<AuthState>(AuthContext);
 
+    log("PROD IN LIST", products);
+
     const [disableInfiniteScroll, setDisableInfiniteScroll] = useState<boolean>(false);
     const [visibleProducts, setVisibleProducts] = useState<ProductProps[] | undefined>([]);
     const [page, setPage] = useState(0);
     const [filter, setFilter] = useState<string | undefined>(undefined);
     const [search, setSearch] = useState<string>("");
 
-    const categories = ["All", "Food", "Electronics", "Books", "Clothes"];
+    const categories = ["All", "Food", "Electronics", "Books", "Clothes", "Random"];
 
     useEffect(() => {
+        log("USE EFFECT PRODS", products);
         if(products?.length && products?.length > 0) {
             setPage(offset);
             fetchData();
@@ -76,8 +79,12 @@ const ProductList: React.FC<RouteComponentProps> = ({ history }) => {
 
     async function searchNext($event: CustomEvent<void>) {
         setTimeout(() => {
+            if(search !== "" || (filter && filter !== "All" && filter !== "")) {
+                setDisableInfiniteScroll(true);
+                return;
+            }
             fetchData();
-            if (products && page > products?.length) {
+            if (products && page > products.length) {
                 setDisableInfiniteScroll(true);
                 setPage(products.length);
             }
@@ -126,11 +133,6 @@ const ProductList: React.FC<RouteComponentProps> = ({ history }) => {
                 {visibleProducts && (
                     <IonList>
                         {Array.from(visibleProducts)
-                            .filter(each => {
-                                if (filter !== undefined && filter !== "All")
-                                    return each.category === filter && each._id !== undefined;
-                                return each._id !== undefined;
-                            })
                             .map(({ _id, productName, price, quantity, category }) =>
                             <Product key={_id} _id={_id} productName={productName} price={price} quantity={quantity} category={category} onEdit={_id => history.push(`/product/${_id}`)} />)}
                     </IonList>

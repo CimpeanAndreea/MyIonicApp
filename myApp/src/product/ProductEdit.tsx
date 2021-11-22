@@ -28,7 +28,7 @@ const ProductEdit: React.FC<ProductEditProps> = ({ history, match }) => {
     const [productName, setProductName] = useState<string>('');
     const [price, setPrice] = useState<number>(0.1);
     const [quantity, setQuantity] = useState<number>(1);
-    const [category, setCategory] = useState<string>('');
+    const [category, setCategory] = useState<string>("Random");
 
     const [product, setProduct] = useState<ProductProps>();
 
@@ -85,8 +85,9 @@ const ProductEdit: React.FC<ProductEditProps> = ({ history, match }) => {
                 </IonItem>
 
                 <IonItem>
-                    <IonLabel>Category:  </IonLabel>
+                    <IonLabel>Category</IonLabel>
                     <IonSelect value={category} onIonChange={e => setCategory(e.detail.value)}>
+                        <IonSelectOption value="Random">Random</IonSelectOption>
                         <IonSelectOption value="Food">Food</IonSelectOption>
                         <IonSelectOption value="Electronics">Electronics</IonSelectOption>
                         <IonSelectOption value="Books">Books</IonSelectOption>
